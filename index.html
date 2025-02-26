@@ -1,83 +1,48 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Telegram Clicker Game</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: #f0f2f5;
-        }
-        #counter {
-            font-size: 48px;
-            margin: 20px;
-            color: #2b5278;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 20px;
-            background: #0088cc;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            margin: 10px;
-        }
+        /* Ваши стили */
     </style>
 </head>
 <body>
-    <h1>Telegram Clicker</h1>
-    <div id="counter">0</div>
-    <button onclick="clickButton()">CLICK ME!</button>
-    <button onclick="saveProgress()">Save Progress</button>
+    <div id="content">
+        <input type="text" id="postId" placeholder="ID поста">
+        <button onclick="deletePost()">Удалить рекламу</button>
+        <div id="result"></div>
+    </div>
 
     <script>
-        let score = 0;
-        
-        // Инициализация Telegram Web App
+        const SERVER_URL = 'https://your-server.com/delete_ads';
+
+        // Инициализация Telegram WebApp
         Telegram.WebApp.ready();
-        
-        // Загрузка сохраненного прогресса
-        function loadSavedData() {
-            const savedData = Telegram.WebApp.initDataUnsafe.user?.id ?
-                localStorage.getItem(`score_${Telegram.WebApp.initDataUnsafe.user.id}`) : null;
+        Telegram.WebApp.expand();
+
+        async function deletePost() {
+            const postId = document.getElementById('postId').value;
             
-            if(savedData) {
-                score = parseInt(savedData);
-                updateCounter();
+            try {
+                const response = await fetch(SERVER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Telegram.WebApp.initData}`
+                    },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        user_id: Telegram.WebApp.initDataUnsafe.user.id
+                    })
+                });
+                
+                const result = await response.json();
+                document.getElementById('result').innerText = result.message;
+                
+            } catch (error) {
+                Telegram.WebApp.showAlert("Ошибка: " + error.message);
             }
-        }
-        
-        // Основная игровая механика
-        function clickButton() {
-            score++;
-            updateCounter();
-        }
-        
-        function updateCounter() {
-            document.getElementById('counter').textContent = score;
-        }
-        
-        // Сохранение прогресса
-        async function saveProgress() {
-            if(Telegram.WebApp.initDataUnsafe.user?.id) {
-                localStorage.setItem(`score_${Telegram.WebApp.initDataUnsafe.user.id}`, score);
-                Telegram.WebApp.showAlert('Progress saved!');
-            } else {
-                Telegram.WebApp.showAlert('Login to save progress');
-            }
-        }
-        
-        // Запуск игры при загрузке
-        window.onload = () => {
-            loadSavedData();
-            Telegram.WebApp.expand();  // Раскрыть приложение на весь экран
         }
     </script>
 </body>
