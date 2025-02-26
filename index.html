@@ -1,47 +1,39 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        /* Ваши стили */
-    </style>
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <div id="content">
-        <input type="text" id="postId" placeholder="ID поста">
-        <button onclick="deletePost()">Удалить рекламу</button>
-        <div id="result"></div>
+    <div class="container">
+        <h1>My VPN Service</h1>
+        <button onclick="getConfig()">Получить конфиг</button>
+        <div id="status"></div>
+        <pre id="config"></pre>
     </div>
 
     <script>
-        const SERVER_URL = 'https://your-server.com/delete_ads';
+        const API_URL = 'https://your-domain.com';
 
-        // Инициализация Telegram WebApp
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        async function deletePost() {
-            const postId = document.getElementById('postId').value;
+        async function getConfig() {
+            const user = Telegram.WebApp.initDataUnsafe.user;
             
             try {
-                const response = await fetch(SERVER_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${Telegram.WebApp.initData}`
-                    },
-                    body: JSON.stringify({
-                        post_id: postId,
-                        user_id: Telegram.WebApp.initDataUnsafe.user.id
-                    })
-                });
+                const response = await fetch(`${API_URL}/check_subscription/${user.id}`);
+                const data = await response.json();
                 
-                const result = await response.json();
-                document.getElementById('result').innerText = result.message;
-                
+                if(data.subscription_end) {
+                    document.getElementById('status').innerHTML = `
+                        <p>Статус: Активен до ${data.subscription_end}</p>
+                    `;
+                } else {
+                    Telegram.WebApp.showAlert('Оформите подписку!');
+                }
             } catch (error) {
-                Telegram.WebApp.showAlert("Ошибка: " + error.message);
+                console.error('Error:', error);
             }
         }
     </script>
